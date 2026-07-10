@@ -85,82 +85,71 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.linalg import eigvals
 from scipy.sparse import diags
+from scipy.linalg import eigvals
 
-def generate_spectrum_optimized():
-    # 1. Setup Parameters
-    # 120 steps is plenty for a smooth, high-quality resolution
-    N_values = np.linspace(1.05, 4.5, 120)
-    L, M = 20.0, 500
-    t = np.linspace(-L, L, M)
-    d = 1.0
+def generate_pt_spectrum():
+    # 1. Physics Parameters
+    # N (or epsilon) range corresponds to the target plot
+    N_values = np.linspace(1.0, 5.0, 100) 
+    M = 400 # Grid size
+    
+    # 2. Contour Definition
+    # PT-symmetric systems require a contour in the complex plane
+    # defined by x = R * exp(-i * phi)
+    phi = np.pi / 4.0
+    R = np.linspace(-10, 10, M)
+    x = R * np.exp(-1j * phi)
+    dx = x[1] - x[0]
     
     plot_N, plot_E = [], []
 
-    print("Generating PT-Symmetry spectrum... (This will run in a stable, single-threaded process)")
+    print("Calculating PT-Symmetric Spectrum...")
 
-    # 2. Main Loop
+    # 3. Solver Loop
     for N in N_values:
-        # Define complex contour
-        x = t * np.sin(np.pi/N) - 1j * np.sqrt(t**2 + d**2) * np.cos(np.pi/N)
+        # Kinetic Energy: Second derivative matrix (Central Difference)
+        main_diag = -2.0 * np.ones(M) / dx**2
+        off_diag = np.ones(M-1) / dx**2
+        T = diags([off_diag, main_diag, off_diag], [-1, 0, 1], format='csr')
         
-        # Finite difference spacing: h_i = x_{i+1} - x_i
-        h = np.diff(x)  # Length M-1 (499)
+        # Potential: V(x) = x^2 * (ix)^(N-2)
+        # This is the standard form for the Bender-Boettcher potential
+        V = (x**2) * (1j * x)**(N - 2)
         
-        # We solve on interior points (1 to M-2), so our matrix is (M-2)x(M-2)
-        # Using M=500, matrix is 498x498
-        # Formula for second derivative on non-uniform grid:
-        # T_ii = 2 / (h_{i-1} * h_i)
-        # T_i,i-1 = -2 / (h_{i-1} * (h_{i-1} + h_i))
-        # T_i,i+1 = -2 / (h_i * (h_{i-1} + h_i))
-        
-        h_prev = h[:-1]  # h_{i-1}
-        h_curr = h[1:]   # h_i
-        
-        main_diag = 2.0 / (h_prev * h_curr)
-        lower_diag = -2.0 / (h_prev * (h_prev + h_curr))
-        upper_diag = -2.0 / (h_curr * (h_prev + h_curr))
-        
-        # The main_diag has length M-2 (498).
-        # The off-diagonals must have length M-3 (497) to fit perfectly.
-        # We slice them to match.
-        T = diags([lower_diag[:-1], main_diag, upper_diag[1:]], [-1, 0, 1], 
-                  shape=(len(main_diag), len(main_diag)), format='csr')
-        
-        # Potential Matrix V
-        ix = 1j * x[1:-1]
-        V = - (np.abs(ix)**N) * np.exp(1j * N * np.unwrap(np.angle(ix)))
-        
-        # Solve for Eigenvalues
-        # Convert to dense only for the solver (required by scipy.linalg.eigvals)
+        # Hamiltonian
         H = T.toarray() + np.diag(V)
+        
+        # Solve
         evals = eigvals(H)
         
         # Filter for Real Spectrum
-        mask = (np.abs(evals.imag) < 0.1) & (evals.real > 0) & (evals.real <= 19)
-        plot_N.extend([N] * np.sum(mask))
-        plot_E.extend(evals[mask].real)
+        # In PT-Symmetric regions, eigenvalues are real. 
+        # We look for eigenvalues with near-zero imaginary parts.
+        real_evals = evals[np.abs(evals.imag) < 0.1].real
+        
+        # Sort and filter range to match plot
+        real_evals = real_evals[(real_evals > 0) & (real_evals < 20)]
+        real_evals = np.sort(real_evals)
+        
+        for e in real_evals:
+            plot_N.append(N)
+            plot_E.append(e)
 
-    # 3. Plotting
-    fig, ax = plt.subplots(figsize=(10, 8), facecolor='#40e0d0')
-    ax.set_facecolor('#40e0d0')
+    # 4. Plotting
+    fig, ax = plt.subplots(figsize=(10, 8), facecolor='white')
+    ax.scatter(plot_N, plot_E, s=2, color='black')
     
-    # Efficient scatter plotting
-    ax.scatter(plot_N, plot_E, s=1, color='black', marker='.')
+    # Stylings
+    ax.axvline(1, color='gray', linestyle='--', lw=1)
+    ax.axvline(2, color='gray', linestyle='--', lw=1)
     
-    # Plot formatting
-    ax.axvline(1, color='yellow', linestyle='--', lw=2.5)
-    ax.axvline(2, color='yellow', linestyle='-', lw=2.5)
-    
-    ax.set_xlim(0.8, 4.5)
-    ax.set_ylim(0, 18)
-    
-    ax.set_xlabel('N', color='white', fontsize=26, weight='bold', loc='right')
-    ax.set_ylabel('Energy-Spectrum', color='white', fontsize=26, weight='bold')
+    ax.set_xlabel('N', fontsize=18)
+    ax.set_ylabel('Re[E]', fontsize=18)
+    ax.set_title('PT-Symmetry Energy Spectrum', fontsize=16)
     
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
-    generate_spectrum_optimized()
+    generate_pt_spectrum()
