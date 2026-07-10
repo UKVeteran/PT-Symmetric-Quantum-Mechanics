@@ -147,6 +147,11 @@ def generate_pt_symmetry_plot():
 if __name__ == "__main__":
     generate_pt_symmetry_plot()
 
+
+
+<summary><b>Click to reveal `plot_pt_spectrum.py`</b></summary>
+
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
