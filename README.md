@@ -80,77 +80,74 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 ## 💻 Visualization Code
 
 <details>
-<summary><b>Click to reveal <code>plot_pt_spectrum.py</code> (Complex Spectrum)</b></summary>
+<summary><b>Click to reveal <code></b></summary>
 
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.sparse import diags
-from scipy.linalg import eigvals
 
-def generate_spectrum():
-    # 1. Physics Parameters
-    # N is the parameter driving the symmetry breaking
-    N_values = np.linspace(1.0, 5.0, 100)
-    M = 400  # Number of grid points
+def calculate_eigenvalues(v, gamma_array, e0=0):
+    """
+    Calculates the real and imaginary parts of the eigenvalues
+    for the 2x2 PT-symmetric Hamiltonian.
+    """
+    E_plus_real = np.zeros_like(gamma_array)
+    E_plus_imag = np.zeros_like(gamma_array)
+    E_minus_real = np.zeros_like(gamma_array)
+    E_minus_imag = np.zeros_like(gamma_array)
     
-    # 2. Complex Contour Definition
-    # We define the contour in the complex plane to satisfy 
-    # the PT-symmetry boundary conditions.
-    phi = np.pi / 4.0
-    R = np.linspace(-15, 15, M)
-    x = R * np.exp(-1j * phi)
-    dx = x[1] - x[0]
-    
-    plot_N, plot_E = [], []
+    for i, gamma in enumerate(gamma_array):
+        # Discriminant of the eigenvalues
+        discriminant = v**2 - gamma**2
+        
+        if discriminant >= 0:
+            # Unbroken PT symmetry: Real eigenvalues
+            E_plus_real[i] = e0 + np.sqrt(discriminant)
+            E_minus_real[i] = e0 - np.sqrt(discriminant)
+        else:
+            # Broken PT symmetry: Complex conjugate pairs
+            E_plus_real[i] = e0
+            E_minus_real[i] = e0
+            E_plus_imag[i] = np.sqrt(-discriminant)
+            E_minus_imag[i] = -np.sqrt(-discriminant)
+            
+    return E_plus_real, E_minus_real, E_plus_imag, E_minus_imag
 
-    print("Generating PT-symmetric spectrum...")
-
-    # 3. Solver Loop
-    # We use sparse matrices to keep CPU usage low
-    for N in N_values:
-        # Kinetic Energy: Second derivative (Central Difference)
-        # Using sparse diags avoids creating a massive dense grid
-        main_diag = -2.0 * np.ones(M) / dx**2
-        off_diag = np.ones(M-1) / dx**2
-        T = diags([off_diag, main_diag, off_diag], [-1, 0, 1], format='csr')
-        
-        # Potential: V(x) = x^2 * (ix)^(N-2)
-        # This potential form reproduces the hooks seen in your plot
-        V = (x**2) * (1j * x)**(N - 2)
-        
-        # Hamiltonian
-        H = T.toarray() + np.diag(V)
-        
-        # Solve for eigenvalues
-        evals = eigvals(H)
-        
-        # Filter for the Real Spectrum
-        # In PT-Symmetric regions, eigenvalues are purely real
-        real_evals = evals[np.abs(evals.imag) < 0.1].real
-        
-        # Filter range to match your target plot (0 to 18)
-        real_evals = real_evals[(real_evals > 0) & (real_evals < 19)]
-        
-        for e in real_evals:
-            plot_N.append(N)
-            plot_E.append(e)
-
-    # 4. Plotting
-    fig, ax = plt.subplots(figsize=(10, 8))
-    ax.scatter(plot_N, plot_E, s=1, color='black')
+def plot_bifurcation():
+    # Parameters
+    v_coupling = 1.0
+    gamma = np.linspace(0, 2.5, 500)
     
-    # Styling to match your provided reference
-    ax.axvline(1, color='yellow', linestyle='--', lw=2.5)
-    ax.axvline(2, color='yellow', linestyle='-', lw=2.5)
+    # Get eigenvalues
+    Re_plus, Re_minus, Im_plus, Im_minus = calculate_eigenvalues(v_coupling, gamma)
     
-    ax.set_xlim(0.8, 4.5)
-    ax.set_ylim(0, 18)
-    ax.set_xlabel('N', fontsize=20, weight='bold')
-    ax.set_ylabel('Energy-Spectrum', fontsize=20, weight='bold')
+    # Create the plot
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle('Eigenvalue Spectrum of a 2x2 $\mathcal{PT}$-Symmetric System', fontsize=16)
+    
+    # --- Real Part Plot ---
+    ax1.plot(gamma, Re_plus, 'b-', linewidth=2, label='$Re(E_+)$')
+    ax1.plot(gamma, Re_minus, 'r--', linewidth=2, label='$Re(E_-)$')
+    ax1.axvline(x=v_coupling, color='k', linestyle=':', label='Exceptional Point ($\gamma = v$)')
+    ax1.set_xlabel('Gain/Loss Parameter ($\gamma$)', fontsize=12)
+    ax1.set_ylabel('Real Part of Energy', fontsize=12)
+    ax1.set_title('Real Spectrum', fontsize=14)
+    ax1.grid(True, alpha=0.3)
+    ax1.legend()
+    
+    # --- Imaginary Part Plot ---
+    ax2.plot(gamma, Im_plus, 'b-', linewidth=2, label='$Im(E_+)$')
+    ax2.plot(gamma, Im_minus, 'r--', linewidth=2, label='$Im(E_-)$')
+    ax2.axvline(x=v_coupling, color='k', linestyle=':', label='Exceptional Point ($\gamma = v$)')
+    ax2.set_xlabel('Gain/Loss Parameter ($\gamma$)', fontsize=12)
+    ax2.set_ylabel('Imaginary Part of Energy', fontsize=12)
+    ax2.set_title('Imaginary Spectrum', fontsize=14)
+    ax2.grid(True, alpha=0.3)
+    ax2.legend()
     
     plt.tight_layout()
+    plt.savefig('pt_symmetry_plot.png', dpi=300)
     plt.show()
 
 if __name__ == "__main__":
-    generate_spectrum()
+    plot_bifurcation()
