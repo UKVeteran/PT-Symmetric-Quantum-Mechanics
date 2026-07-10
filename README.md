@@ -4,9 +4,6 @@
 <h3><b>Visualizing Non-Hermitian Physics & The Exceptional Point</b></h3>
 
 <p>
-  <a href="https://github.com/yourusername/pt-symmetry/stargazers"><img src="https://img.shields.io/github/stars/yourusername/pt-symmetry?style=for-the-badge&color=FFE333" alt="Stars"></a>
-  <a href="https://github.com/yourusername/pt-symmetry/network/members"><img src="https://img.shields.io/github/forks/yourusername/pt-symmetry?style=for-the-badge&color=FF9900" alt="Forks"></a>
-  <a href="https://github.com/yourusername/pt-symmetry/blob/main/LICENSE"><img src="https://img.shields.io/github/license/yourusername/pt-symmetry?style=for-the-badge&color=0088FF" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
 </p>
 
