@@ -151,3 +151,7 @@ def plot_bifurcation():
 
 if __name__ == "__main__":
     plot_bifurcation()
+
+<p align="center">
+  <img src="PT_Bifurc.png"  width="800" />
+</p>
