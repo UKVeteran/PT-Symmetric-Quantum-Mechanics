@@ -78,9 +78,8 @@ $$ E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2} $$
 
 ## 💻 Visualization Code
 
-Below is the Python implementation used to calculate the eigenspectrum and plot the bifurcation. 
-
 <details>
+  
 <summary><b>Click to reveal `plot_pt_spectrum.py`</b></summary>
 ```python
 import numpy as np
@@ -185,7 +184,8 @@ def generate_pt_symmetry_plot():
 if __name__ == "__main__":
     generate_pt_symmetry_plot()
 
-
+<details>
+  
 <summary><b>Click to reveal `plot_pt_symmetry.py`</b></summary>
 
 ```python
