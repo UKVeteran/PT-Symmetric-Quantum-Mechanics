@@ -151,7 +151,7 @@
   
   if __name__ == "__main__":
       plot_bifurcation()
-  
-  <p align="center">
-<img src="PT_Bifurc.png" alt="PT-Symmetric Bifurcation" width="800">
-  </p>
+``` 
+<p align="center">
+  <img src="PT_Bifurc.png" alt="PT-Symmetric Bifurcation" width="800">
+</p>
