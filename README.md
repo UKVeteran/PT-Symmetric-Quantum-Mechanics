@@ -81,6 +81,110 @@ $$ E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2} $$
 Below is the Python implementation used to calculate the eigenspectrum and plot the bifurcation. 
 
 <details>
+<summary><b>Click to reveal `plot_pt_spectrum.py`</b></summary>
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.linalg import eigvals
+
+def generate_pt_symmetry_plot():
+    print("Generating PT-Symmetry spectrum... (This may take ~10-15 seconds)")
+    
+    # ---------------------------------------------------------
+    # 1. Physics Parameters & Grid Setup
+    # ---------------------------------------------------------
+    N_min, N_max = 1.05, 4.5
+    N_steps = 200
+    N_values = np.linspace(N_min, N_max, N_steps)
+    
+    L = 20.0       # Extent of the grid (needs to be wide for N -> 1)
+    M = 1200       # Number of grid points
+    t = np.linspace(-L, L, M)
+    d = 1.0        # Smoothness parameter for the complex hyperbola
+    
+    plot_N = []
+    plot_E = []
+
+    # ---------------------------------------------------------
+    # 2. Main Loop over N
+    # ---------------------------------------------------------
+    for N in N_values:
+        # A. Define the dynamic complex contour x(t)
+        # This hyperbola gracefully asymptotes into the correct Stokes wedges for any N
+        x = t * np.sin(np.pi/N) - 1j * np.sqrt(t**2 + d**2) * np.cos(np.pi/N)
+        
+        # B. Compute non-uniform finite difference spacings
+        h = np.diff(x)         # Spacing h_j = x_{j+1} - x_j
+        hj = h[:-1]            # h_j
+        hjp1 = h[1:]           # h_{j+1}
+        Sj = hj + hjp1         # h_j + h_{j+1}
+        
+        # C. Construct Tridiagonal Kinetic Energy Matrix T = - d^2/dx^2
+        diag_T = 2.0 / (hj * hjp1)
+        upper_T = -2.0 / (Sj[:-1] * hjp1[:-1])
+        lower_T = -2.0 / (Sj[1:] * hj[1:])
+        
+        T = np.diag(diag_T) + np.diag(upper_T, 1) + np.diag(lower_T, -1)
+        
+        # D. Construct Potential Matrix V(x) = -(ix)^N
+        # We evaluate on the interior points to match matrix size
+        x_int = x[1:-1]
+        ix = 1j * x_int
+        
+        # To compute (ix)^N without branch cut discontinuities on the complex plane,
+        # we calculate the magnitude and smoothly unwrap the phase.
+        r = np.abs(ix)
+        phi = np.unwrap(np.angle(ix))
+        V = - (r**N) * np.exp(1j * N * phi)
+        
+        # E. Diagonalize the full Hamiltonian
+        H = T + np.diag(V)
+        evals = eigvals(H)
+        
+        # F. Filter for the Real Spectrum
+        # At exceptional points, real eigenvalues merge and acquire large imaginary parts.
+        for e in evals:
+            if abs(e.imag) < 1e-2 and 0 < e.real <= 19:
+                plot_N.append(N)
+                plot_E.append(e.real)
+
+    # ---------------------------------------------------------
+    # 3. Plotting & Aesthetics (Recreating the original image)
+    # ---------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(10, 8), facecolor='#40e0d0')
+    ax.set_facecolor('#40e0d0') # Teal background
+    
+    # Plot the calculated eigenvalues
+    ax.plot(plot_N, plot_E, 'k.', markersize=2)
+    
+    # Reference lines for N=1 (boundary of broken phase) and N=2 (Hermitian point)
+    ax.axvline(1, color='yellow', linestyle='--', lw=2.5)
+    ax.axvline(2, color='yellow', linestyle='-', lw=2.5)
+
+    # Limits matching the provided image
+    ax.set_xlim(0.8, 4.5)
+    ax.set_ylim(0, 18)
+    
+    # Axis styling
+    ax.set_xlabel('N', color='white', fontsize=26, weight='bold', loc='right')
+    ax.set_ylabel('Energy-Spectrum', color='white', fontsize=26, weight='bold')
+    
+    # Tick styling
+    ax.tick_params(axis='both', which='major', labelsize=14, direction='in', length=8)
+    ax.tick_params(axis='both', which='minor', direction='in', length=4)
+    ax.minorticks_on()
+    
+    # Overlay the exact text from your image
+    ax.text(3.3, 13.5, 'PT-Symmetry\nin\nQuantum Th.', 
+            color='white', fontsize=40, weight='bold', 
+            ha='center', va='center', family='sans-serif')
+            
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+    generate_pt_symmetry_plot()
+```
 <summary><b>Click to reveal `plot_pt_symmetry.py`</b></summary>
 
 ```python
