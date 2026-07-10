@@ -78,8 +78,10 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 
 ## 💻 Visualization Code
 
+## 💻 Visualization Code
+
 <details>
-<summary><b>Click to reveal `plot_pt_spectrum.py`</b></summary>
+<summary><b>Click to reveal <code>plot_pt_spectrum.py</code> (Complex Spectrum)</b></summary>
 
 ```python
 import numpy as np
@@ -146,40 +148,3 @@ def generate_pt_symmetry_plot():
 
 if __name__ == "__main__":
     generate_pt_symmetry_plot()
-
-
-
-<summary><b>Click to reveal `plot_pt_spectrum.py`</b></summary>
-
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-
-def calculate_eigenvalues(v, gamma_array, e0=0):
-    E_plus_real, E_plus_imag = np.zeros_like(gamma_array), np.zeros_like(gamma_array)
-    E_minus_real, E_minus_imag = np.zeros_like(gamma_array), np.zeros_like(gamma_array)
-    
-    for i, gamma in enumerate(gamma_array):
-        discriminant = v**2 - gamma**2
-        if discriminant >= 0:
-            E_plus_real[i] = e0 + np.sqrt(discriminant)
-            E_minus_real[i] = e0 - np.sqrt(discriminant)
-        else:
-            E_plus_real[i] = e0
-            E_minus_real[i] = e0
-            E_plus_imag[i] = np.sqrt(-discriminant)
-            E_minus_imag[i] = -np.sqrt(-discriminant)
-    return E_plus_real, E_minus_real, E_plus_imag, E_minus_imag
-
-def plot_bifurcation():
-    v_coupling = 1.0
-    gamma = np.linspace(0, 2.5, 500)
-    Re_plus, Re_minus, Im_plus, Im_minus = calculate_eigenvalues(v_coupling, gamma)
-    
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-    ax1.plot(gamma, Re_plus, label='$Re(E_+)$'); ax1.plot(gamma, Re_minus, '--', label='$Re(E_-)$')
-    ax2.plot(gamma, Im_plus, label='$Im(E_+)$'); ax2.plot(gamma, Im_minus, '--', label='$Im(E_-)$')
-    plt.show()
-
-if __name__ == "__main__":
-    plot_bifurcation()
