@@ -84,67 +84,44 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 <summary><b>Click to reveal <code>plot_pt_spectrum.py</code> (Complex Spectrum)</b></summary>
 
 ```python
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.linalg import eigvals
-
-def generate_pt_symmetry_plot():
-    # 1. Physics Parameters & Grid Setup
-    N_min, N_max = 1.05, 4.5
-    N_steps = 200
-    N_values = np.linspace(N_min, N_max, N_steps)
-    L = 20.0
-    M = 1200
+def compute_spectrum_point(N):
+    # Parameters
+    L, M = 20.0, 500
     t = np.linspace(-L, L, M)
     d = 1.0
     
-    plot_N = []
-    plot_E = []
-
-    # 2. Main Loop over N
-    for N in N_values:
-        x = t * np.sin(np.pi/N) - 1j * np.sqrt(t**2 + d**2) * np.cos(np.pi/N)
-        
-        # Finite difference spacings
-        h = np.diff(x)
-        hj = h[:-1]
-        hjp1 = h[1:]
-        Sj = hj + hjp1
-        
-        # Construct Tridiagonal Kinetic Energy Matrix T = - d^2/dx^2
-        diag_T = 2.0 / (hj * hjp1)
-        upper_T = -2.0 / (Sj[:-1] * hjp1[:-1])
-        lower_T = -2.0 / (Sj[1:] * hj[1:])
-        
-        T = np.diag(diag_T) + np.diag(upper_T, 1) + np.diag(lower_T, -1)
-        
-        # Construct Potential Matrix V(x) = -(ix)^N
-        x_int = x[1:-1]
-        ix = 1j * x_int
-        r = np.abs(ix)
-        phi = np.unwrap(np.angle(ix))
-        V = - (r**N) * np.exp(1j * N * phi)
-        
-        H = T + np.diag(V)
-        evals = eigvals(H)
-        
-        for e in evals:
-            if abs(e.imag) < 1e-2 and 0 < e.real <= 19:
-                plot_N.append(N)
-                plot_E.append(e.real)
-
-    # 3. Plotting
-    fig, ax = plt.subplots(figsize=(10, 8), facecolor='#40e0d0')
-    ax.set_facecolor('#40e0d0')
-    ax.plot(plot_N, plot_E, 'k.', markersize=2)
-    ax.axvline(1, color='yellow', linestyle='--', lw=2.5)
-    ax.axvline(2, color='yellow', linestyle='-', lw=2.5)
-    ax.set_xlim(0.8, 4.5)
-    ax.set_ylim(0, 18)
-    ax.set_xlabel('N', color='white', fontsize=26, weight='bold', loc='right')
-    ax.set_ylabel('Energy-Spectrum', color='white', fontsize=26, weight='bold')
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == "__main__":
-    generate_pt_symmetry_plot()
+    # 1. Complex contour
+    x = t * np.sin(np.pi/N) - 1j * np.sqrt(t**2 + d**2) * np.cos(np.pi/N)
+    
+    # 2. Finite difference spacings
+    # h has length M-1 (499)
+    h = np.diff(x)
+    
+    # We want to solve on interior points (index 1 to M-2), 
+    # so the matrix size is (M-2) x (M-2) = 498 x 498
+    # h_j (distance to previous point) and h_next (distance to next point)
+    hj = h[:-1]    # indices 0 to 497 (length 498)
+    hjp1 = h[1:]   # indices 1 to 498 (length 498)
+    sj = hj + hjp1 # length 498
+    
+    # 3. Construct Diagonals for (M-2) x (M-2) matrix
+    main_diag = 2.0 / (hj * hjp1)
+    # Off-diagonals must be length (M-2) - 1 = 497
+    lower_diag = -2.0 / (sj[1:] * hj[1:])
+    upper_diag = -2.0 / (sj[:-1] * hjp1[:-1])
+    
+    # Build sparse kinetic matrix
+    T = diags([lower_diag, main_diag, upper_diag], [-1, 0, 1], shape=(M-2, M-2), format='csr')
+    
+    # 4. Potential Matrix V (must match interior points: indices 1 to M-2)
+    x_int = x[1:-1]
+    ix = 1j * x_int
+    V = - (np.abs(ix)**N) * np.exp(1j * N * np.unwrap(np.angle(ix)))
+    
+    # 5. Solve
+    H = T.toarray() + np.diag(V)
+    evals = eigvals(H)
+    
+    # 6. Filter
+    mask = (np.abs(evals.imag) < 0.1) & (evals.real > 0) & (evals.real <= 19)
+    return N, evals[mask].real
