@@ -78,10 +78,7 @@
   
   
   ## 💻 Visualization Code
-  
-  <details>
-  <summary><b>Click to reveal</b></summary>
-  
+   
   ```python
   import numpy as np
   import matplotlib.pyplot as plt
