@@ -76,7 +76,6 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 
 ---
 
-## 💻 Visualization Code
 
 ## 💻 Visualization Code
 
