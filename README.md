@@ -58,7 +58,7 @@ $$ \mathcal{H} = p^2 + ix^3 $$
 
 ## 🎲 The Two-Level Toy Model
 
-To visualize the exact moment PT-symmetry "breaks" (the **Exceptional Point**), we use a standard $2 \times 2$ matrix representing two coupled modes—one amplifying (gain) and one dissipating (loss).
+To visualize the exact moment PT-symmetry "breaks" (the **Exceptional Point**), we use a standard $2 \times 2$ matrix representing two coupled modes: one amplifying (gain) and one dissipating (loss).
 
 $$ \mathcal{H} = \begin{pmatrix} \varepsilon_0 + i\gamma & v \\ v & \varepsilon_0 - i\gamma \end{pmatrix} $$
 
