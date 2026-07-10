@@ -80,7 +80,7 @@ $$E_{\pm} = \varepsilon_0 \pm \sqrt{v^2 - \gamma^2}$$
 ## 💻 Visualization Code
 
 <details>
-<summary><b>Click to reveal <code></b></summary>
+<summary><b>Click to reveal</b></summary>
 
 ```python
 import numpy as np
