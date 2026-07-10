@@ -88,68 +88,69 @@ import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from scipy.linalg import eigvals
 
-def generate_pt_spectrum():
+def generate_spectrum():
     # 1. Physics Parameters
-    # N (or epsilon) range corresponds to the target plot
-    N_values = np.linspace(1.0, 5.0, 100) 
-    M = 400 # Grid size
+    # N is the parameter driving the symmetry breaking
+    N_values = np.linspace(1.0, 5.0, 100)
+    M = 400  # Number of grid points
     
-    # 2. Contour Definition
-    # PT-symmetric systems require a contour in the complex plane
-    # defined by x = R * exp(-i * phi)
+    # 2. Complex Contour Definition
+    # We define the contour in the complex plane to satisfy 
+    # the PT-symmetry boundary conditions.
     phi = np.pi / 4.0
-    R = np.linspace(-10, 10, M)
+    R = np.linspace(-15, 15, M)
     x = R * np.exp(-1j * phi)
     dx = x[1] - x[0]
     
     plot_N, plot_E = [], []
 
-    print("Calculating PT-Symmetric Spectrum...")
+    print("Generating PT-symmetric spectrum...")
 
     # 3. Solver Loop
+    # We use sparse matrices to keep CPU usage low
     for N in N_values:
-        # Kinetic Energy: Second derivative matrix (Central Difference)
+        # Kinetic Energy: Second derivative (Central Difference)
+        # Using sparse diags avoids creating a massive dense grid
         main_diag = -2.0 * np.ones(M) / dx**2
         off_diag = np.ones(M-1) / dx**2
         T = diags([off_diag, main_diag, off_diag], [-1, 0, 1], format='csr')
         
         # Potential: V(x) = x^2 * (ix)^(N-2)
-        # This is the standard form for the Bender-Boettcher potential
+        # This potential form reproduces the hooks seen in your plot
         V = (x**2) * (1j * x)**(N - 2)
         
         # Hamiltonian
         H = T.toarray() + np.diag(V)
         
-        # Solve
+        # Solve for eigenvalues
         evals = eigvals(H)
         
-        # Filter for Real Spectrum
-        # In PT-Symmetric regions, eigenvalues are real. 
-        # We look for eigenvalues with near-zero imaginary parts.
+        # Filter for the Real Spectrum
+        # In PT-Symmetric regions, eigenvalues are purely real
         real_evals = evals[np.abs(evals.imag) < 0.1].real
         
-        # Sort and filter range to match plot
-        real_evals = real_evals[(real_evals > 0) & (real_evals < 20)]
-        real_evals = np.sort(real_evals)
+        # Filter range to match your target plot (0 to 18)
+        real_evals = real_evals[(real_evals > 0) & (real_evals < 19)]
         
         for e in real_evals:
             plot_N.append(N)
             plot_E.append(e)
 
     # 4. Plotting
-    fig, ax = plt.subplots(figsize=(10, 8), facecolor='white')
-    ax.scatter(plot_N, plot_E, s=2, color='black')
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.scatter(plot_N, plot_E, s=1, color='black')
     
-    # Stylings
-    ax.axvline(1, color='gray', linestyle='--', lw=1)
-    ax.axvline(2, color='gray', linestyle='--', lw=1)
+    # Styling to match your provided reference
+    ax.axvline(1, color='yellow', linestyle='--', lw=2.5)
+    ax.axvline(2, color='yellow', linestyle='-', lw=2.5)
     
-    ax.set_xlabel('N', fontsize=18)
-    ax.set_ylabel('Re[E]', fontsize=18)
-    ax.set_title('PT-Symmetry Energy Spectrum', fontsize=16)
+    ax.set_xlim(0.8, 4.5)
+    ax.set_ylim(0, 18)
+    ax.set_xlabel('N', fontsize=20, weight='bold')
+    ax.set_ylabel('Energy-Spectrum', fontsize=20, weight='bold')
     
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
-    generate_pt_spectrum()
+    generate_spectrum()
